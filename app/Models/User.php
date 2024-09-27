@@ -48,11 +48,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function addresses(){
+    public function addresses()
+    {
         return $this->hasMany(Address::class);
     }
 
-    public function telephoneNumbers(){
+    public function telephoneNumbers()
+    {
         return $this->hasMany(TelephoneNumber::class);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Exceptions\NotFoundException;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -24,8 +26,14 @@ class UsersController extends Controller
                 [
                     'name' => 'required',
                     'email' => 'required|email|unique:users,email',
-                    'cpf' => 'required',
-                    'password' => 'required'
+                    'cpf' => 'required|unique:users,cpf',
+                    'password' => 'required',
+                    'profile' => [
+                        function ($attribute, $value, $fail) {
+                            if (!in_array($value, ['admin', 'user', null]))
+                                $fail('Parameter value ("' . $attribute . '" : "' . $value . '") not permited');
+                        },
+                    ],
                 ]
             );
             if ($validateUser->fails()) {
@@ -47,7 +55,7 @@ class UsersController extends Controller
                 'status' => true,
                 'message' => 'User created successfully',
                 'token' => $user->createToken("API TOKEN")->plainTextToken
-            ], 200);
+            ], 201);
         } catch (\Throwable $th) {
             DB::rollback();
             return response()->json([
@@ -99,10 +107,31 @@ class UsersController extends Controller
         }
     }
 
+    public function getUserById(Request $request, $id)
+    {
+        try {
+            $user = User::find($id);
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User "' . $id . '" not found',
+                ], 404);
+            }
+            $user->addresses;
+            $user->telephoneNumbers;
+            return $user;
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => false,
+                'message' => $th->getMessage()
+            ], 500);
+        }
+    }
+
     public function listUsers()
     {
         $users = User::where('id', '<>', Auth::id())->get();
-        foreach($users as $user){
+        foreach ($users as $user) {
             $user->addresses;
             $user->telephoneNumbers;
         }
@@ -111,9 +140,146 @@ class UsersController extends Controller
 
     public function loggedUser()
     {
-        $user = User::where('id', '=', Auth::id())->first();
+        $user = User::find(Auth::id());
         $user->addresses;
         $user->telephoneNumbers;
         return $user;
+    }
+
+    public function deleteUser(Request $request, $id)
+    {
+        try {
+            if (Auth::id() == $id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Cannot delete your own user account',
+                ], 400);
+            }
+            $deletedUser = User::where('id', '=', $id)->delete();
+            if (!$deletedUser) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User "' . $id . '" not found',
+                ], 404);
+            }
+            return response()->json([
+                'status' => true,
+                'message' => 'User deleted successfully',
+                'userId' => $id
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => false,
+                'message' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateUserById(Request $request, $id)
+    {
+        try {
+            if (Auth::id() == $id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Wrong endpoint, use "/api/user/update"',
+                ], 400);
+            }
+            $validateUser = Validator::make(
+                $request->all(),
+                [
+                    'profile' => [
+                        function ($attribute, $value, $fail) {
+                            if (!in_array($value, ['admin', 'user', null]))
+                                $fail('Parameter value ("' . $attribute . '" : "' . $value . '") not permited');
+                        },
+                    ],
+                ]
+            );
+            if ($validateUser->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Bad request',
+                    'errors' => $validateUser->errors()
+                ], 400);
+            }
+            UserService::updateUserById($id, $request->all());
+            return response()->json([
+                'status' => true,
+                'message' => "User successfully updated"
+            ], 202);
+        } catch (NotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => false,
+                'message' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateCurrentUser(Request $request)
+    {
+        try {
+            $validateUser = Validator::make(
+                $request->all(),
+                [
+                    'profile' => [
+                        function ($attribute, $value, $fail) {
+                            $fail('Parameter "' . $attribute . '" not permited');
+                        },
+                    ],
+                    'email' => [
+                        function ($attribute, $value, $fail) {
+                            $fail('Parameter "' . $attribute . '" not permited');
+                        },
+                    ],
+                    'cpf' => [
+                        function ($attribute, $value, $fail) {
+                            $fail('Parameter "' . $attribute . '" not permited');
+                        },
+                    ],
+                    'updated_at' => [
+                        function ($attribute, $value, $fail) {
+                            $fail('Parameter "' . $attribute . '" not permited');
+                        },
+                    ],
+                    'created_at' => [
+                        function ($attribute, $value, $fail) {
+                            $fail('Parameter "' . $attribute . '" not permited');
+                        },
+                    ],
+                    'email_verified_at' => [
+                        function ($attribute, $value, $fail) {
+                            $fail('Parameter "' . $attribute . '" not permited');
+                        },
+                    ],
+                ]
+            );
+            if ($validateUser->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Bad params',
+                    'errors' => $validateUser->errors()
+                ], 400);
+            }
+            UserService::updateUserById(Auth::id(), $request->all());
+            return response()->json([
+                'status' => true,
+                'message' => "User successfully updated"
+            ], 202);
+        } catch (NotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => false,
+                'message' => $th->getMessage()
+            ], 500);
+        }
     }
 }
