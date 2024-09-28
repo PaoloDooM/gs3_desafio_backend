@@ -14,9 +14,12 @@ return new class extends Migration
         Schema::create('telephone_numbers', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id');
+            $table->string('description');
             $table->string('number');
-            $table->boolean('default')->default(false);
+            $table->boolean('principal')->default(false);
             $table->timestamps();
+            $table->unique(['user_id', 'description']);
+            $table->unique(['user_id', 'number']);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
