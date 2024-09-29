@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\BadParamsException;
+use App\Models\Profile;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,10 +30,10 @@ class UsersController extends Controller
                     'email' => 'required|email|unique:users,email',
                     'cpf' => 'required|min:5|unique:users,cpf',
                     'password' => 'required|min:6',
-                    'profile' => [
+                    'profile_id' => [
                         function ($attribute, $value, $fail) {
-                            if (!in_array($value, ['admin', 'user', null])) {
-                                $fail('Parameter value ("' . $attribute . '" : "' . $value . '") not permited');
+                            if (!Profile::find($value)) {
+                                $fail('"' . $attribute . '": "' . $value . '") don\'t exist');
                             }
                         },
                     ],
@@ -79,7 +80,7 @@ class UsersController extends Controller
                 'email' => $request->email,
                 'cpf' => $request->cpf,
                 'password' => Hash::make($request->password),
-                'profile' => $request->profile ?? 'user'
+                'profile_id' => $request->profile_id ?? Profile::PROFILES['user']
             ]);
             foreach($request->addresses??[] as $address){
                 UserService::addAddress($user->id, $address);
@@ -155,6 +156,7 @@ class UsersController extends Controller
             }
             $user->addresses;
             $user->telephoneNumbers;
+            $user->profile;
             return $user;
         } catch (\Throwable $th) {
             return response()->json([
@@ -164,21 +166,23 @@ class UsersController extends Controller
         }
     }
 
-    public function listUsers()
+    public function listUsers(Request $request)
     {
         $users = User::where('id', '<>', Auth::id())->get();
         foreach ($users as $user) {
             $user->addresses;
             $user->telephoneNumbers;
+            $user->profile;
         }
         return $users;
     }
 
-    public function loggedUser()
+    public function loggedUser(Request $request)
     {
         $user = User::find(Auth::id());
         $user->addresses;
         $user->telephoneNumbers;
+        $user->profile;
         return $user;
     }
 
@@ -224,13 +228,13 @@ class UsersController extends Controller
                 $request->all(),
                 [
                     'name' => 'nullable|min:5|max:150',
-                    'email' => 'nullable|email|unique:users,email',
-                    'cpf' => 'nullable|min:5|unique:users,cpf',
+                    'email' => 'nullable|email',
+                    'cpf' => 'nullable|min:5',
                     'password' => 'nullable|min:6',
-                    'profile' => [
+                    'profile_id' => [
                         function ($attribute, $value, $fail) {
-                            if (!in_array($value, ['admin', 'user', null])) {
-                                $fail('Parameter value ("' . $attribute . '" : "' . $value . '") not permited');
+                            if (!Profile::find($value)) {
+                                $fail('"' . $attribute . '": "' . $value . '") don\'t exist');
                             }
                         },
                     ],
@@ -243,7 +247,7 @@ class UsersController extends Controller
                     'errors' => $validate->errors()
                 ], 400);
             }
-            UserService::updateUserById($id, $request->only(['name', 'email', 'cpf', 'profile', 'password']));
+            UserService::updateUserById($id, $request->only(['name', 'email', 'cpf', 'profile_id', 'password']));
             return response()->json([
                 'status' => true,
                 'message' => "User successfully updated"
@@ -684,5 +688,9 @@ class UsersController extends Controller
                 'message' => $th->getMessage()
             ], 500);
         }
+    }
+
+    public function getProfiles(Request $request){
+        return Profile::all();
     }
 }

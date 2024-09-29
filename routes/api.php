@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckProfile;
+use App\Models\Profile;
 
 Route::post('/user/login', 'App\Http\Controllers\UsersController@userLogin');
 
@@ -16,15 +17,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/user/phonenumber/{id}', 'App\Http\Controllers\UsersController@deletePhoneNumber');
     Route::put('/user/phonenumber', 'App\Http\Controllers\UsersController@updatePhoneNumber');
     //Admin
-    Route::post('/user', 'App\Http\Controllers\UsersController@createUser')->middleware(CheckProfile::class . ':admin');
-    Route::get('/user/list', 'App\Http\Controllers\UsersController@listUsers')->middleware(CheckProfile::class . ':admin');
-    Route::delete('/user/{id}', 'App\Http\Controllers\UsersController@deleteUser')->middleware(CheckProfile::class . ':admin');
-    Route::get('/user/{id}', 'App\Http\Controllers\UsersController@getUserById')->middleware(CheckProfile::class . ':admin');
-    Route::put('/user/{id}', 'App\Http\Controllers\UsersController@updateUserById')->middleware(CheckProfile::class . ':admin');
-    Route::post('/user/{id}/address', 'App\Http\Controllers\UsersController@addAddressByUserId')->middleware(CheckProfile::class . ':admin');
-    Route::delete('/user/{user_id}/address/{address_id}', 'App\Http\Controllers\UsersController@deleteAddressFromUserId')->middleware(CheckProfile::class . ':admin');
-    Route::put('/user/{id}/address', 'App\Http\Controllers\UsersController@updateAddressByUserId')->middleware(CheckProfile::class . ':admin');
-    Route::post('/user/{id}/phonenumber', 'App\Http\Controllers\UsersController@addPhoneNumberByUserId')->middleware(CheckProfile::class . ':admin');
-    Route::delete('/user/{user_id}/phonenumber/{phone_id}', 'App\Http\Controllers\UsersController@deletePhoneNumberFromUserId')->middleware(CheckProfile::class . ':admin');
-    Route::put('/user/{id}/phonenumber', 'App\Http\Controllers\UsersController@updatePhoneNumberByUserId')->middleware(CheckProfile::class . ':admin');
+    Route::middleware(CheckProfile::class . ':'.Profile::PROFILES['admin'])->group(function(){
+        Route::get('/profile/list', 'App\Http\Controllers\UsersController@getProfiles');
+        Route::post('/user', 'App\Http\Controllers\UsersController@createUser');
+        Route::get('/user/list', 'App\Http\Controllers\UsersController@listUsers');
+        Route::delete('/user/{id}', 'App\Http\Controllers\UsersController@deleteUser');
+        Route::get('/user/{id}', 'App\Http\Controllers\UsersController@getUserById');
+        Route::put('/user/{id}', 'App\Http\Controllers\UsersController@updateUserById');
+        Route::post('/user/{id}/address', 'App\Http\Controllers\UsersController@addAddressByUserId');
+        Route::delete('/user/{user_id}/address/{address_id}', 'App\Http\Controllers\UsersController@deleteAddressFromUserId');
+        Route::put('/user/{id}/address', 'App\Http\Controllers\UsersController@updateAddressByUserId');
+        Route::post('/user/{id}/phonenumber', 'App\Http\Controllers\UsersController@addPhoneNumberByUserId');
+        Route::delete('/user/{user_id}/phonenumber/{phone_id}', 'App\Http\Controllers\UsersController@deletePhoneNumberFromUserId');
+        Route::put('/user/{id}/phonenumber', 'App\Http\Controllers\UsersController@updatePhoneNumberByUserId');
+    });
 });

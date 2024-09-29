@@ -66,7 +66,7 @@ class UserService
                 ->where('principal', '=', true, 'and')
                 ->where('id', '<>', $address['id'])
                 ->get();
-            if (!$principalAddresses && !$address['principal']) {
+            if (count($principalAddresses)<=0 && !$address['principal']) {
                 throw new BadParamsException('A principal address is required.');
             }
             if (count($principalAddresses) > 0 && $address['principal']) {
@@ -133,7 +133,7 @@ class UserService
                 ->where('principal', '=', true, 'and')
                 ->where('id', '<>', $phoneNumber['id'])
                 ->get();
-            if (!$principalPhoneNumbers && !$phoneNumber['principal']) {
+            if (count($principalPhoneNumbers)<=0 && !$phoneNumber['principal']) {
                 throw new BadParamsException('A principal phone number is required');
             }
             if (count($principalPhoneNumbers) > 0 && $phoneNumber['principal']) {

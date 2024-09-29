@@ -22,7 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'cpf',
-        'profile'
+        'profile_id'
     ];
 
     /**
@@ -31,6 +31,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
+        'profile_id',
         'password',
         'remember_token',
     ];
@@ -56,5 +57,10 @@ class User extends Authenticatable
     public function telephoneNumbers()
     {
         return $this->hasMany(TelephoneNumber::class);
+    }
+
+    public function profile()
+    {
+        return $this->belongsTo(Profile::class);
     }
 }

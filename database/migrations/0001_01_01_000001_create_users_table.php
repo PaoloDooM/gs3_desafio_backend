@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Profile;
 
 return new class extends Migration
 {
@@ -18,11 +19,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('cpf')->unique();
-            $table->enum('profile',['admin','user'])->default('user');
+            $table->integer('profile_id')->default(Profile::PROFILES['user']);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            $table->foreign('profile_id')->references('id')->on('profiles');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -41,7 +43,7 @@ return new class extends Migration
         });
 
         DB::table('users')->insert([
-            ['name' => 'Paolo Bufalino', 'email' => 'paolobufalinomora91@gmail.com', 'cpf'=> '71103118137','profile'=>'admin', 'password'=>Hash::make('123456')]
+            ['name' => 'Paolo Bufalino', 'email' => 'paolobufalinomora91@gmail.com', 'cpf'=> '71103118137','profile_id'=>Profile::PROFILES['admin'], 'password'=>Hash::make('123456')]
         ]);
     }
 

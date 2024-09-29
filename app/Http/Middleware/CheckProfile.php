@@ -18,7 +18,7 @@ class CheckProfile
         $user = $request->user();
         if (!$user) {
             abort(401, 'Unauthorized');
-        } else if (in_array($user->profile, $profiles)) {
+        } else if (in_array($user->profile->id, $profiles)) {
             return $next($request);
         }
         abort(403, 'Forbidden');
