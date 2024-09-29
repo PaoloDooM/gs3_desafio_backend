@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: gs3_desafio_db
+      POSTGRES_USER: gs3_desafio_client
+      POSTGRES_PASSWORD: m93yYkWa
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel
+    depends_on:
+      - postgres
+    restart: always
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "php artisan migrate && php artisan serve --host=0.0.0.0 --port=8000"
+
+volumes:
+  pgdata:
