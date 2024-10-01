@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\Address;
 use App\Models\TelephoneNumber;
 use App\Exceptions\NotFoundException;
-use App\Exceptions\BadParamsException;
 use Illuminate\Support\Facades\DB;
 
 class UserService
@@ -52,6 +51,14 @@ class UserService
         if (!$deletedAddresses) {
             throw new NotFoundException('Address "' . $id . '" not found for user "' . $user_id . '"');
         }
+        $principalAddresses = Address::where('user_id', '=', $user_id, 'and')->where('principal', '=', true)->get();
+        if (count($principalAddresses) <= 0) {
+            $address = Address::all()->last();
+            if (!!$address) {
+                $address->principal = true;
+                $address->save();
+            }
+        }
     }
 
     public static function updateAddress($user_id, $address)
@@ -66,10 +73,9 @@ class UserService
                 ->where('principal', '=', true, 'and')
                 ->where('id', '<>', $address['id'])
                 ->get();
-            if (count($principalAddresses)<=0 && !$address['principal']) {
-                throw new BadParamsException('A principal address is required.');
-            }
-            if (count($principalAddresses) > 0 && $address['principal']) {
+            if (count($principalAddresses) <= 0 && !$address['principal']) {
+                $address['principal'] = true;
+            } else if (count($principalAddresses) > 0 && $address['principal']) {
                 foreach ($principalAddresses as $principalAddress) {
                     $principalAddress->principal = false;
                     $principalAddress->save();
@@ -119,6 +125,14 @@ class UserService
         if (!$deletedPhoneNumbers) {
             throw new NotFoundException('Phone number "' . $id . '" not found for user "' . $user_id . '"');
         }
+        $principalPhoneNumbers = TelephoneNumber::where('user_id', '=', $user_id, 'and')->where('principal', '=', true)->get();
+        if (count($principalPhoneNumbers) <= 0) {
+            $phoneNumber = TelephoneNumber::all()->last();
+            if (!!$phoneNumber) {
+                $phoneNumber->principal = true;
+                $phoneNumber->save();
+            }
+        }
     }
 
     public static function updatePhoneNumber($user_id, $phoneNumber)
@@ -133,10 +147,9 @@ class UserService
                 ->where('principal', '=', true, 'and')
                 ->where('id', '<>', $phoneNumber['id'])
                 ->get();
-            if (count($principalPhoneNumbers)<=0 && !$phoneNumber['principal']) {
-                throw new BadParamsException('A principal phone number is required');
-            }
-            if (count($principalPhoneNumbers) > 0 && $phoneNumber['principal']) {
+            if (count($principalPhoneNumbers) <= 0 && !$phoneNumber['principal']) {
+                $phoneNumber['principal'] = true;
+            } else if (count($principalPhoneNumbers) > 0 && $phoneNumber['principal']) {
                 foreach ($principalPhoneNumbers as $principalPhoneNumber) {
                     $principalPhoneNumber->principal = false;
                     $principalPhoneNumber->save();

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Exceptions\NotFoundException;
-use App\Exceptions\BadParamsException;
 use App\Models\Profile;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -37,29 +36,29 @@ class UsersController extends Controller
                             }
                         },
                     ],
-                    'addresses'=>[
+                    'addresses' => [
                         function ($attribute, $value, $fail) {
-                            foreach($value??[] as $address){
+                            foreach ($value ?? [] as $address) {
                                 $validate = Validator::make($address, [
                                     'address' => 'required|min:10|max:255',
                                     'description' => 'required|min:1|max:50',
                                     'principal' => 'nullable|boolean'
                                 ]);
-                                if($validate->fails()){
+                                if ($validate->fails()) {
                                     $fail($validate->errors());
                                 }
                             }
                         },
                     ],
-                    'phoneNumbers'=>[
+                    'phoneNumbers' => [
                         function ($attribute, $value, $fail) {
-                            foreach($value??[] as $address){
+                            foreach ($value ?? [] as $address) {
                                 $validate = Validator::make($address, [
                                     'number' => 'required|min:5',
                                     'description' => 'required|min:1|max:50',
                                     'principal' => 'nullable|boolean'
                                 ]);
-                                if($validate->fails()){
+                                if ($validate->fails()) {
                                     $fail($validate->errors());
                                 }
                             }
@@ -82,10 +81,10 @@ class UsersController extends Controller
                 'password' => Hash::make($request->password),
                 'profile_id' => $request->profile_id ?? Profile::PROFILES['user']
             ]);
-            foreach($request->addresses??[] as $address){
+            foreach ($request->addresses ?? [] as $address) {
                 UserService::addAddress($user->id, $address);
             }
-            foreach($request->phoneNumbers??[] as $phoneNumber){
+            foreach ($request->phoneNumbers ?? [] as $phoneNumber) {
                 UserService::addPhoneNumber($user->id, $phoneNumber);
             }
             DB::commit();
@@ -435,11 +434,6 @@ class UsersController extends Controller
                 'status' => true,
                 'message' => 'Address successfully updated'
             ], 202);
-        } catch (BadParamsException $badParamsException) {
-            return response()->json([
-                'status' => false,
-                'message' => $badParamsException->getMessage()
-            ], 400);
         } catch (NotFoundException $notFoundException) {
             return response()->json([
                 'status' => false,
@@ -477,11 +471,6 @@ class UsersController extends Controller
                 'status' => true,
                 'message' => 'Address successfully updated'
             ], 202);
-        } catch (BadParamsException $badParamsException) {
-            return response()->json([
-                'status' => false,
-                'message' => $badParamsException->getMessage()
-            ], 400);
         } catch (NotFoundException $notFoundException) {
             return response()->json([
                 'status' => false,
@@ -630,11 +619,6 @@ class UsersController extends Controller
                 'status' => true,
                 'message' => 'Phone number successfully updated'
             ], 202);
-        } catch (BadParamsException $badParamsException) {
-            return response()->json([
-                'status' => false,
-                'message' => $badParamsException->getMessage()
-            ], 400);
         } catch (NotFoundException $notFoundException) {
             return response()->json([
                 'status' => false,
@@ -672,11 +656,6 @@ class UsersController extends Controller
                 'status' => true,
                 'message' => 'Phone number successfully updated'
             ], 202);
-        } catch (BadParamsException $badParamsException) {
-            return response()->json([
-                'status' => false,
-                'message' => $badParamsException->getMessage()
-            ], 400);
         } catch (NotFoundException $notFoundException) {
             return response()->json([
                 'status' => false,
@@ -690,7 +669,8 @@ class UsersController extends Controller
         }
     }
 
-    public function getProfiles(Request $request){
+    public function getProfiles(Request $request)
+    {
         return Profile::all();
     }
 }
