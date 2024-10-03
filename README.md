@@ -20,3 +20,5 @@ Para executar o projeto, deverá ser utilizado Docker. Este projeto é composto 
 ```plaintext
 docker-compose up --build -d
 ```
+
+A aplicação backend será servida na porta 8000 e o banco de dados na porta 5433
